@@ -6,6 +6,7 @@ A draggable polyline to use with [react-leaflet](https://github.com/PaulLeCam/re
 ## Demo & Examples
 
 [Basic example](http://manufont.github.io/react-leaflet-draggable-polyline/)
+
 [Example using google maps directions](http://manufont.github.io/react-leaflet-draggable-polyline/directions.html)
 
 
@@ -18,7 +19,7 @@ npm i -S react-leaflet-draggable-polyline
 
 ## Usage
 
-DraggablePolyline uses React context API. It needs to be nested inside a react-leaflet Map.
+DraggablePolyline uses React context API. It needs to be nested inside a react-leaflet `Map`.
 
 ```
 import DraggablePolyline from 'react-leaflet-draggable-polyline';
@@ -32,6 +33,7 @@ For a fully working example, please check out [this one](https://github.com/manu
 ### Properties
 
 This component extends all [react-leaflet polyline properties](https://github.com/PaulLeCam/react-leaflet/blob/master/docs/Components.md#polyline).
+
 | Name | Type | Default | Description |
 |:-----|:-----|:--------|:------------|
 | positions | array[array[float]] | | The polyline positions formatted as `[lat, lng]` arrays |
