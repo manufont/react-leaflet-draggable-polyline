@@ -1,14 +1,15 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import { Map, Marker, Polyline, LayerGroup } from 'react-leaflet';
+import { Marker, Polyline } from 'react-leaflet';
 
 import { mouseOverWaypointIcon, draggableWaypointIcon } from './icons';
 import { snapToPolyline, objectWithoutProperties, toArrayLatLng, toObjLatLng } from './utils';
 
-
 class DraggablePolyline extends Component {
-	constructor(props){
-		super(props);
+	constructor(props, context){
+		super(props, context);
+
+		this.map = context.map;
 
 		this.onMapMouseMove = this.onMapMouseMove.bind(this);
 		this.removeNewWaypointMarker = this.removeNewWaypointMarker.bind(this);
@@ -23,19 +24,15 @@ class DraggablePolyline extends Component {
 	}
 
 	componentWillMount(){
-		this.context.map.on('mousemove', this.onMapMouseMove);
+		this.map.on('mousemove', this.onMapMouseMove);
 	}
 
 	componentWillUnMount(){
-		this.context.map.off('mousemove', this.onMapMouseMove);
+		this.map.off('mousemove', this.onMapMouseMove);
 	}
 
-	getMap(){
-		return this.context.map;
-	};
-
 	onMapMouseMove(event){
-		const map = this.getMap();
+		const map = this.map;
 		if (this.props.positions && !this.previewHidden) {
 			if (!this.onPreviewDrag) {
 				const location = snapToPolyline(
@@ -67,13 +64,13 @@ class DraggablePolyline extends Component {
 			})
 			.on('dragstart', this.onPreviewMarkerDragStart)
 			.on('dragend', this.onPreviewMarkerDragEnd)
-			.addTo(this.getMap());
+			.addTo(this.map);
 		}, 5);
 	};
 
 	removePreviewMarker(){
 		if (this.previewMarker) {
-			this.getMap().removeLayer(this.previewMarker);
+			this.map.removeLayer(this.previewMarker);
 			delete this.previewMarker;
 		}
 	};
@@ -91,13 +88,13 @@ class DraggablePolyline extends Component {
 			.on('dragend', this.onNewWaypointMarkerDragEnd)
 			.on('mouseover', this.hidePreview)
 			.on('mouseout', this.showPreview)
-			.addTo(this.getMap());
+			.addTo(this.map);
 		}, 5);
 	};
 
 	removeNewWaypointMarker(){
 		if (this.newWaypointMarker) {
-			this.getMap().removeLayer(this.newWaypointMarker);
+			this.map.removeLayer(this.newWaypointMarker);
 			delete this.newWaypointMarker;
 		}
 	};
@@ -219,6 +216,10 @@ const customProps = [
 	'draggableWaypointIcon',
 ];
 
+DraggablePolyline.contextTypes = {
+	map: PropTypes.object.isRequired
+};
+
 DraggablePolyline.propTypes = {
 	draggableWaypointIcon: PropTypes.object,
 	mouseOverWaypointIcon: PropTypes.object,
@@ -235,11 +236,5 @@ DraggablePolyline.defaultProps = {
 	waypoints: [],
 	weight: 10
 };
-
-DraggablePolyline.contextTypes = {
-	map: PropTypes.object.isRequired
-};
-
-export { snapToPolyline };
 
 export default DraggablePolyline;

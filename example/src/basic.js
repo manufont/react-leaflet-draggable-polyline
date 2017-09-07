@@ -3,7 +3,7 @@ import { render } from 'react-dom';
 import { Map, Polyline, TileLayer } from 'react-leaflet';
 import L from 'leaflet';
 
-import DraggablePolyline from '../../src/DraggablePolyline';
+import DraggablePolyline from 'react-leaflet-draggable-polyline';
 
 
 class App extends Component {

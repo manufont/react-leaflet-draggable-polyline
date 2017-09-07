@@ -17,7 +17,9 @@ var taskConfig = {
 		dependencies: [
 			'classnames',
 			'react',
-			'react-dom'
+			'react-dom',
+			'leaflet',
+			'react-leaflet'
 		],
 		lib: 'lib'
 	},
