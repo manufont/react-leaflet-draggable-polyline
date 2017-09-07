@@ -3,6 +3,9 @@
 A draggable polyline to use with [react-leaflet](https://github.com/PaulLeCam/react-leaflet). This may be useful if you need to edit a polyline provided by a driving directions api (such as [google maps javascript api DirectionsService](https://developers.google.com/maps/documentation/javascript/directions)).
 
 
+![desktop demo](demos/leaflet-draggable-polyline-desktop.gif?raw=true "Desktop demo")
+![mobile demo](demos/leaflet-draggable-polyline-mobile.gif?raw=true "Mobile demo")
+
 ## Demo & Examples
 
 [Basic example](http://manufont.github.io/react-leaflet-draggable-polyline/)
