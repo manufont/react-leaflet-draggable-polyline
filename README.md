@@ -44,7 +44,7 @@ This component extends all [react-leaflet polyline properties](https://github.co
 | onWaypointMove | function(waypoint, index) | | The callback that fires after a waypoint has been moved. The `index` parameter represent the index of the moved waypoint. |
 | mouseOverWaypointIcon | [leaflet icon](http://leafletjs.com/reference-1.2.0.html#icon) | | The icon that shows on polyline mouseover |
 | draggableWaypointIcon | [leaflet icon](http://leafletjs.com/reference-1.2.0.html#icon) | | The draggable waypoints icon |
-| weight | number | 10 | The weight of the polyline. It needs to be large to enable touch events on a mobile device. |
+| weight | number | 10 | The weight of the polyline. It needs to be large enough to enable touch events on a mobile device. |
 
 
 ### Notes
