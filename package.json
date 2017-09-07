@@ -1,6 +1,6 @@
 {
   "name": "react-leaflet-draggable-polyline",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Draggable Polyline",
   "main": "lib/DraggablePolyline.js",
   "author": "Emmanuel Fonteneau",
