@@ -1,0 +1,29 @@
+{
+  "name": "react-leaflet-draggable-polyline",
+  "version": "0.0.0",
+  "description": "Draggable Polyline",
+  "main": "dist/react-leaflet-draggable-polyline.min.js",
+  "homepage": "https://github.com/manufont/react-leaflet-draggable-polyline",
+  "authors": [
+    "Emmanuel Fonteneau"
+  ],
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "react",
+    "react-component"
+  ],
+  "license": "MIT",
+  "ignore": [
+    ".editorconfig",
+    ".gitignore",
+    "package.json",
+    "src",
+    "node_modules",
+    "example",
+    "test"
+  ]
+}
