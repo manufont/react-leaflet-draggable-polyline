@@ -7,8 +7,14 @@ import DraggablePolyline from 'react-leaflet-draggable-polyline';
 
 const gmaps = window.google.maps;
 
+const flatten = (array) =>
+	Array.prototype.concat.apply([], array);
+
 const flatMap = (lambda, array) =>
 	Array.prototype.concat.apply([], array.map(lambda));
+
+const lastOfArray = array =>
+	array[array.length-1];
 
 const toObjLatLng = latLng =>
 	L.latLng(latLng[0], latLng[1]);
@@ -17,14 +23,13 @@ const toArrayLatLng = latLng =>
 	[latLng.lat, latLng.lng];
 
 const getPositions = response =>
-	flatMap(leg =>
+	response.routes[0].legs.map(leg =>
 		flatMap(step =>
 			gmaps.geometry.encoding.decodePath(step.polyline.points).map(
 				gLocation => toArrayLatLng(gLocation.toJSON())
 			),
 			leg.steps
-		),
-		response.routes[0].legs
+		)
 	);
 
 const getWaypoints = response =>
@@ -41,8 +46,10 @@ class App extends Component {
 		this.state = {
 			waypoints: [],
 			positions: [
-				[43.604403, 1.443373],
-				[43.613547, 1.308568]
+				[
+					[43.604403, 1.443373],
+					[43.613547, 1.308568]
+				]
 			]
 		};
 	}
@@ -59,13 +66,12 @@ class App extends Component {
 		const positions = this.state.positions;
 		const request = {
 			travelMode: window.google.maps.TravelMode.DRIVING,
-			origin: toObjLatLng(positions[0]),
-			destination: toObjLatLng(positions[positions.length-1]),
+			origin: toObjLatLng(positions[0][0]),
+			destination: toObjLatLng(lastOfArray(lastOfArray(positions))),
 			waypoints: waypoints.map(waypoint => ({
 				location: toObjLatLng(waypoint),
 				stopover: true
-			})),
-			optimizeWaypoints: true
+			}))
 		};
 		const directionsService = new gmaps.DirectionsService();
 		directionsService.route(request, (response, status) => {
@@ -81,7 +87,8 @@ class App extends Component {
 
 	render () {
 		const { waypoints, positions } = this.state;
-		const bounds = L.latLngBounds(positions);
+		const flattenPositions = flatten(positions);
+		const bounds = L.latLngBounds(flattenPositions);
 
 		const styles = {
 			map: {
@@ -95,7 +102,7 @@ class App extends Component {
 					attribution='&copy; Google 2017 | &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 				/>
 				<Polyline
-					positions={positions}
+					positions={flattenPositions}
 					color={'black'}
 					weight={14}
 					opacity={0.5}

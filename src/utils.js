@@ -1,3 +1,7 @@
+export const flatten = function(array){
+  return Array.prototype.concat.apply([], array);
+};
+
 const minBy = function(lambda, array) {
   const mapped = array.map(lambda);
   return array[mapped.indexOf(Math.min(...mapped))];
@@ -17,7 +21,7 @@ const closestOfSegment = (p, v, w) => {
   return [v[0] + t * (w[0] - v[0]), v[1] + t * (w[1] - v[1])];
 };
 
-export const snapToPolyline = (latlng, positions) => {
+const closestIndexOfPolyline = (latlng, positions) => {
   var minDistance = Number.MAX_VALUE;
   var indexOfClosest = 0;
   for (var i = 0; i < positions.length; ++i) {
@@ -27,6 +31,15 @@ export const snapToPolyline = (latlng, positions) => {
       indexOfClosest = i;
     }
   }
+  return indexOfClosest;
+};
+
+export const closestOfPolyline = (latlng, positions) => {
+  return positions[closestIndexOfPolyline(latlng, positions)];
+};
+
+export const snapToPolyline = (latlng, positions) => {
+  const indexOfClosest = closestIndexOfPolyline(latlng, positions);
   const closest = positions[indexOfClosest];
 
   return minBy(

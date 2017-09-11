@@ -15,21 +15,26 @@ class App extends Component {
 		this.state = {
 			waypoints: [],
 			positions: [
-				[43.604403, 1.443373],
-				[43.613547, 1.308568]
+				[
+					[43.604403, 1.443373],
+					[43.613547, 1.308568]
+				]
 			]
 		};
 	}
 
 	onWaypointsChange(waypoints, index){
 		const positions = this.state.positions;
+		const allPositions = [
+			positions[0][0],
+			...waypoints,
+			positions[positions.length-1][1]
+		];
 		this.setState({
 			waypoints,
-			positions: [
-				positions[0],
-				...waypoints,
-				positions[positions.length-1]
-			]
+			positions: allPositions.slice(1).map((p, i) =>
+				[allPositions[i], p]
+			)
 		});
 	}
 
@@ -48,12 +53,6 @@ class App extends Component {
 				<TileLayer
 					url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
 					attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-				/>
-				<Polyline
-					positions={positions}
-					color={'black'}
-					weight={14}
-					opacity={0.5}
 				/>
 				<DraggablePolyline
 					positions={positions}
