@@ -7,7 +7,7 @@ import { mouseOverWaypointIcon, draggableWaypointIcon } from './icons';
 import {
 	flatten,
 	snapToPolyline,
-	closestOfPolyline,
+	closestIndexOfPolyline,
 	objectWithoutProperties,
 	toArrayLatLng,
 	toObjLatLng
@@ -18,7 +18,8 @@ class DraggablePolyline extends Component {
 		super(props, context);
 
 		this.map = context.map;
-		this.fetchPositions(props.positions);
+		this.validProps(props);
+		this.setPositions(props.positions);
 
 		this.onMapMouseMove = this.onMapMouseMove.bind(this);
 		this.removeNewWaypointMarker = this.removeNewWaypointMarker.bind(this);
@@ -41,35 +42,47 @@ class DraggablePolyline extends Component {
 	}
 
 	componentWillReceiveProps(props){
-		this.fetchPositions(props.positions);
+		this.validProps(props);
+		this.setPositions(props.positions);
+	}
+
+	validProps(props){
+		if(props.positions.length === 0)
+			throw new Error('Positions array should not be empty');
+		if(props.positions[0][0].constructor === Array){
+			props.positions.forEach(leg => {
+				if(leg.length < 2)
+					throw new Error('Positions array should contains at least 2 positions');
+			});
+			if(props.positions.length !== props.waypoints.length+1)
+				throw new Error('Positions legs length should be equal to waypoints length + 1');
+		}else{
+			if(props.positions.length < 2)
+				throw new Error('Positions array should contains at least 2 positions');
+		}
 	}
 
 	snapToPolyline(position){
 		return snapToPolyline(position, this.positions);
 	}
 
-	closestOfPolyline(position){
-		return closestOfPolyline(position, this.positions);
+	closestIndexOfPolyline(position){
+		return closestIndexOfPolyline(position, this.positions);
 	}
 
-	fetchPositions(positions){
-		this.positionsMap = {};
+	setPositions(positions){
+		this.positionIndexes = [];
 		if(positions[0][0].constructor === Array){
-			positions.forEach((leg, index) => {
-				leg.forEach(position => {
-					this.positionsMap[position.join(',')] = index;
-				});
+			let indexes = 0;
+			positions.forEach(leg => {
+				indexes += leg.length;
+				this.positionIndexes.push(indexes);
 			});
 			this.positions = flatten(positions);
-			this.positions = this.positions.filter((position, index) => 
-				index === 0 ||
-				position[0] !== this.positions[index-1][0] ||
-				position[1] !== this.positions[index-1][1]
-			);
 		}else{
 			this.positions = positions;
 		}
-	};
+	}
 
 	onMapMouseMove(event){
 		const map = this.map;
@@ -90,7 +103,7 @@ class DraggablePolyline extends Component {
 		} else {
 			this.removePreviewMarker();
 		}
-	};
+	}
 
 	addPreviewMarker(location){
 		clearTimeout(this.previewTimeout);
@@ -103,43 +116,53 @@ class DraggablePolyline extends Component {
 			.on('dragend', this.onPreviewMarkerDragEnd)
 			.addTo(this.map);
 		}, 5);
-	};
+	}
 
 	removePreviewMarker(){
 		if (this.previewMarker) {
 			this.map.removeLayer(this.previewMarker);
 			delete this.previewMarker;
 		}
-	};
+	}
 
 	removeNewWaypointMarker(){
 		if (this.newWaypointMarker) {
 			this.map.removeLayer(this.newWaypointMarker);
 			delete this.newWaypointMarker;
 		}
-	};
+	}
 
-	onPreviewMarkerDragStart(event){
-		const location = this.closestOfPolyline(toArrayLatLng(event.target.getLatLng()));
-		L.Util.setOptions(this.previewMarker, {
-			index: this.positionsMap[location.join(',')]
-		});
-		this.onPreviewDrag = true;
-	};
+	getIndex(positionIndex){
+		const index = this.positionIndexes.findIndex(index =>
+			positionIndex < index
+		);
+		if(index === -1) return null;
+		return index;
+	}
 
-	onWaypointAdded(newWaypoint, realIndex){
+	onWaypointAdded(newWaypoint, index){
 		if(this.props.onWaypointsChange){
-			const index = realIndex === undefined ? 0 : realIndex;
-			const waypoints = [
+			const waypoints = index === undefined ? [
+				...this.props.waypoints, newWaypoint
+			] : [
 				...this.props.waypoints.slice(0, index),
 				newWaypoint,
 				...this.props.waypoints.slice(index)
-			];
-			this.props.onWaypointsChange(waypoints, realIndex);
+			]
+			this.props.onWaypointsChange(waypoints, index);
 		}
 		if(this.props.onWaypointAdd){
-			this.props.onWaypointAdd(newWaypoint);
+			this.props.onWaypointAdd(newWaypoint, index);
 		}
+	}
+
+	onPreviewMarkerDragStart(event){
+		const closestIndex = this.closestIndexOfPolyline(toArrayLatLng(event.target.getLatLng()));
+		L.Util.setOptions(this.previewMarker, {
+			index: this.getIndex(closestIndex)
+		});
+		this.previewMarker.setZIndexOffset(100);
+		this.onPreviewDrag = true;
 	}
 
 	onPreviewMarkerDragEnd(event){
@@ -148,14 +171,14 @@ class DraggablePolyline extends Component {
 		const index = event.target.options.index;
 		this.removePreviewMarker();
 		this.onWaypointAdded(newWaypoint, index);
-	};
+	}
 
 	onNewWaypointMarkerDragEnd(event){
 		const newWaypoint = toArrayLatLng(event.target.getLatLng());
 		this.removeNewWaypointMarker();
 		const index = event.target.options.options.index;
 		this.onWaypointAdded(newWaypoint, index);
-	};
+	}
 
 	onWaypointClick(event){
 		this.showPreview();
@@ -169,7 +192,7 @@ class DraggablePolyline extends Component {
 			const waypoints = this.props.waypoints.filter((o, i) => i !== index);
 			this.props.onWaypointsChange(waypoints);
 		}
-	};
+	}
 
 	onWaypointDragEnd(marker){
 		const index = marker.target.options.options.index;
@@ -184,10 +207,10 @@ class DraggablePolyline extends Component {
 			);
 			this.props.onWaypointsChange(waypoints, index);
 		}
-	};
+	}
 
 	onPolylineClick(event){
-		const closest = this.closestOfPolyline(toArrayLatLng(event.latlng));
+		const closestIndex = this.closestIndexOfPolyline(toArrayLatLng(event.latlng));
 		const location = this.snapToPolyline(toArrayLatLng(event.latlng));
 		this.removeNewWaypointMarker();
 		clearTimeout(this.newWaypointTimeout);
@@ -197,7 +220,7 @@ class DraggablePolyline extends Component {
 				draggable: true,
 				zIndexOffset: 50,
 				options: {
-					index: this.positionsMap[closest.join(',')]
+					index: this.getIndex[closestIndex]
 				}
 			})
 			.on('click', this.removeNewWaypointMarker)
@@ -209,10 +232,11 @@ class DraggablePolyline extends Component {
 		if(this.props.onclick){
 			this.props.onclick();
 		}
-	};
+	}
 
 	hidePreview(){
 		this.previewHidden = true;
+		this.onPreviewDrag = false;
 	}
 
 	showPreview(){

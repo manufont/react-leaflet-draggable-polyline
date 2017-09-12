@@ -5,6 +5,12 @@ import L from 'leaflet';
 
 import DraggablePolyline from 'react-leaflet-draggable-polyline';
 
+const last = array =>
+	array[array.length-1];
+
+const flatten = array =>
+	Array.prototype.concat.apply([], array);
+
 
 class App extends Component {
 	constructor(props){
@@ -15,28 +21,34 @@ class App extends Component {
 		this.state = {
 			waypoints: [],
 			positions: [
-				[43.604403, 1.443373],
-				[43.613547, 1.308568]
+				[
+					[43.604403, 1.443373],
+					[43.613547, 1.308568]
+				]
 			]
 		};
 	}
 
 	onWaypointsChange(waypoints, index){
 		const positions = this.state.positions;
+		const allPositions = [
+			positions[0][0],
+			...waypoints,
+			last(last(positions))
+		];
 		this.setState({
 			waypoints,
-			positions: [
-				positions[0],
-				...waypoints,
-				positions[positions.length-1]
-			]
+			positions: allPositions.slice(1).map((p, i) =>
+				[allPositions[i], p]
+			)
 		});
 	}
 
 
 	render () {
 		const { waypoints, positions } = this.state;
-		const bounds = L.latLngBounds(positions);
+		const flattenPositions = flatten(positions);
+		const bounds = L.latLngBounds(flattenPositions);
 
 		const styles = {
 			map: {
@@ -50,7 +62,7 @@ class App extends Component {
 					attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 				/>
 				<Polyline
-					positions={positions}
+					positions={flattenPositions}
 					color={'black'}
 					weight={14}
 					opacity={0.5}

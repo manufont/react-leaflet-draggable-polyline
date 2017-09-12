@@ -29,11 +29,13 @@ var taskConfig = {
 		dist: 'example/dist',
 		files: [
 			'index.html',
+			'reordered.html',
 			'directions.html',
 			'.gitignore'
 		],
 		scripts: [
 			'basic.js',
+			'reordered.js',
 			'directions.js'
 		],
 		less: [

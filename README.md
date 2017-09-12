@@ -10,6 +10,8 @@ A draggable polyline to use with [react-leaflet](https://github.com/PaulLeCam/re
 
 [Basic example](http://manufont.github.io/react-leaflet-draggable-polyline/)
 
+[Example with ordered new waypoints](http://manufont.github.io/react-leaflet-draggable-polyline/reordered.html)
+
 [Example using google maps directions](http://manufont.github.io/react-leaflet-draggable-polyline/directions.html)
 
 
@@ -39,7 +41,7 @@ This component extends all [react-leaflet polyline properties](https://github.co
 
 | Name | Type | Default | Description |
 |:-----|:-----|:--------|:------------|
-| positions | array[array[float]] | | The polyline positions formatted as `[lat, lng]` arrays |
+| positions | array[array[float]] or array[array[array[float]]] | | The polyline positions formatted as `[lat, lng]` arrays. If an array of positions is provided, every new waypoint will be reordered according to the positions array it has been dragged from |
 | waypoints | array[array[float]] | [] | The waypoints formatted as `[lat, lng]` arrays |
 | onWaypointsChange | function(waypoints, index) | | The callback that fires after every change in waypoints array. The `index` parameter represent the index of the changed waypoint. |
 | onWaypointAdd | function(waypoint) | | The callback that fires after a waypoint has been added. |
@@ -48,13 +50,6 @@ This component extends all [react-leaflet polyline properties](https://github.co
 | mouseOverWaypointIcon | [leaflet icon](http://leafletjs.com/reference-1.2.0.html#icon) | | The icon that shows on polyline mouseover |
 | draggableWaypointIcon | [leaflet icon](http://leafletjs.com/reference-1.2.0.html#icon) | | The draggable waypoints icon |
 | weight | number | 10 | The weight of the polyline. It needs to be large enough to enable touch events on a mobile device. |
-
-
-### Notes
-
-Please note that waypoints are note reordered according to the position they have been dragged from. This plugin assume that waypoints are totally independent from the positions (which is often the case when displaying driving directions). In order to reorder the waypoints, you have to implement your own method.
-
-If you're using google maps api Directions Service, you can solve this by setting the property `optimizeWaypoints` to `true` (check out [this example](https://github.com/manufont/react-leaflet-draggable-polyline/blob/master/example/src/directions.js)).
 
 
 ## Development (`src`, `lib` and the build process)

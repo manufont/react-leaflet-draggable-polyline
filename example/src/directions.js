@@ -7,13 +7,10 @@ import DraggablePolyline from 'react-leaflet-draggable-polyline';
 
 const gmaps = window.google.maps;
 
-const flatten = (array) =>
+const flatten = array =>
 	Array.prototype.concat.apply([], array);
 
-const flatMap = (lambda, array) =>
-	Array.prototype.concat.apply([], array.map(lambda));
-
-const lastOfArray = array =>
+const last = array =>
 	array[array.length-1];
 
 const toObjLatLng = latLng =>
@@ -24,11 +21,12 @@ const toArrayLatLng = latLng =>
 
 const getPositions = response =>
 	response.routes[0].legs.map(leg =>
-		flatMap(step =>
-			gmaps.geometry.encoding.decodePath(step.polyline.points).map(
-				gLocation => toArrayLatLng(gLocation.toJSON())
-			),
-			leg.steps
+		flatten(
+			leg.steps.map(step =>
+				gmaps.geometry.encoding.decodePath(step.polyline.points).map(
+					gLocation => toArrayLatLng(gLocation.toJSON())
+				)
+			)
 		)
 	);
 
@@ -67,7 +65,7 @@ class App extends Component {
 		const request = {
 			travelMode: window.google.maps.TravelMode.DRIVING,
 			origin: toObjLatLng(positions[0][0]),
-			destination: toObjLatLng(lastOfArray(lastOfArray(positions))),
+			destination: toObjLatLng(last(last(positions))),
 			waypoints: waypoints.map(waypoint => ({
 				location: toObjLatLng(waypoint),
 				stopover: true
@@ -95,6 +93,7 @@ class App extends Component {
 				height: '300px'
 			}
 		};
+
 		return (
 			<Map bounds={bounds} style={styles.map}>
 				<TileLayer

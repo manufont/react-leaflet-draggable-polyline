@@ -1,11 +1,5 @@
-export const flatten = function(array){
-  return Array.prototype.concat.apply([], array);
-};
-
-const minBy = function(lambda, array) {
-  const mapped = array.map(lambda);
-  return array[mapped.indexOf(Math.min(...mapped))];
-};
+export const flatten = array => 
+  Array.prototype.concat.apply([], array);
 
 const sqr = x => x * x;
 
@@ -15,40 +9,41 @@ const closestOfSegment = (p, v, w) => {
   const l2 = distance(v, w);
   if (l2 === 0) return v;
   const t =
-    ((p[0] - v[0]) * (w[0] - v[0]) + (p[1] - v[1]) * (w[1] - v[1])) / l2;
+    ((p[0]-v[0])*(w[0]-v[0]) + (p[1]-v[1])*(w[1]-v[1])) / l2;
   if (t < 0) return v;
   if (t > 1) return w;
-  return [v[0] + t * (w[0] - v[0]), v[1] + t * (w[1] - v[1])];
-};
-
-const closestIndexOfPolyline = (latlng, positions) => {
-  var minDistance = Number.MAX_VALUE;
-  var indexOfClosest = 0;
-  for (var i = 0; i < positions.length; ++i) {
-    let d = distance(latlng, positions[i]);
-    if (d < minDistance) {
-      minDistance = d;
-      indexOfClosest = i;
-    }
-  }
-  return indexOfClosest;
-};
-
-export const closestOfPolyline = (latlng, positions) => {
-  return positions[closestIndexOfPolyline(latlng, positions)];
+  return [
+    v[0] + t * (w[0] - v[0]),
+    v[1] + t * (w[1] - v[1])
+  ];
 };
 
 export const snapToPolyline = (latlng, positions) => {
-  const indexOfClosest = closestIndexOfPolyline(latlng, positions);
-  const closest = positions[indexOfClosest];
+  let minDistance = Number.MAX_VALUE;
+  let closest = null;
+  for (let i = 0, len = positions.length-1; i < len; ++i) {
+    let p = closestOfSegment(latlng, positions[i], positions[i+1]);
+    let d = distance(latlng, p);
+    if (d < minDistance) {
+      closest = p;
+      minDistance = d;
+    }
+  }
+  return closest;
+};
 
-  return minBy(
-    point => distance(latlng, point),
-    [indexOfClosest - 1, indexOfClosest + 1]
-      .map(index => positions[index])
-      .filter(point => point !== undefined)
-      .map(point => closestOfSegment(latlng, closest, point))
-  );
+export const closestIndexOfPolyline = (latlng, positions) => {
+  let minDistance = Number.MAX_VALUE;
+  let closestIndex = null;
+  for (let i = 0, len = positions.length-1; i < len; ++i) {
+    let p = closestOfSegment(latlng, positions[i], positions[i+1]);
+    let d = distance(latlng, p);
+    if (d < minDistance) {
+      closestIndex = i;
+      minDistance = d;
+    }
+  }
+  return closestIndex;
 };
 
 export const toArrayLatLng = latLng => [latLng.lat, latLng.lng];
