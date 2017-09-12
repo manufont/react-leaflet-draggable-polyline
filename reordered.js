@@ -7,6 +7,8 @@ var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_ag
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
@@ -27,38 +29,12 @@ var _reactLeafletDraggablePolyline = require('react-leaflet-draggable-polyline')
 
 var _reactLeafletDraggablePolyline2 = _interopRequireDefault(_reactLeafletDraggablePolyline);
 
-var gmaps = window.google.maps;
-
-var flatten = function flatten(array) {
-	return Array.prototype.concat.apply([], array);
-};
-
 var last = function last(array) {
 	return array[array.length - 1];
 };
 
-var toObjLatLng = function toObjLatLng(latLng) {
-	return _leaflet2['default'].latLng(latLng[0], latLng[1]);
-};
-
-var toArrayLatLng = function toArrayLatLng(latLng) {
-	return [latLng.lat, latLng.lng];
-};
-
-var getPositions = function getPositions(response) {
-	return response.routes[0].legs.map(function (leg) {
-		return flatten(leg.steps.map(function (step) {
-			return gmaps.geometry.encoding.decodePath(step.polyline.points).map(function (gLocation) {
-				return toArrayLatLng(gLocation.toJSON());
-			});
-		}));
-	});
-};
-
-var getWaypoints = function getWaypoints(response) {
-	return response.routes[0].legs.slice(1).map(function (leg) {
-		return toArrayLatLng(leg.start_location.toJSON());
-	});
+var flatten = function flatten(array) {
+	return Array.prototype.concat.apply([], array);
 };
 
 var App = (function (_Component) {
@@ -78,40 +54,15 @@ var App = (function (_Component) {
 	}
 
 	_createClass(App, [{
-		key: 'componentWillMount',
-		value: function componentWillMount() {
-			this.getDirections([]);
-		}
-	}, {
 		key: 'onWaypointsChange',
-		value: function onWaypointsChange(waypoints) {
-			this.getDirections(waypoints);
-		}
-	}, {
-		key: 'getDirections',
-		value: function getDirections(waypoints) {
-			var _this = this;
-
+		value: function onWaypointsChange(waypoints, index) {
 			var positions = this.state.positions;
-			var request = {
-				travelMode: window.google.maps.TravelMode.DRIVING,
-				origin: toObjLatLng(positions[0][0]),
-				destination: toObjLatLng(last(last(positions))),
-				waypoints: waypoints.map(function (waypoint) {
-					return {
-						location: toObjLatLng(waypoint),
-						stopover: true
-					};
+			var allPositions = [positions[0][0]].concat(_toConsumableArray(waypoints), [last(last(positions))]);
+			this.setState({
+				waypoints: waypoints,
+				positions: allPositions.slice(1).map(function (p, i) {
+					return [allPositions[i], p];
 				})
-			};
-			var directionsService = new gmaps.DirectionsService();
-			directionsService.route(request, function (response, status) {
-				if (status === gmaps.DirectionsStatus.OK) {
-					_this.setState({
-						waypoints: getWaypoints(response),
-						positions: getPositions(response)
-					});
-				}
 			});
 		}
 	}, {
@@ -129,13 +80,12 @@ var App = (function (_Component) {
 					height: '300px'
 				}
 			};
-
 			return _react2['default'].createElement(
 				_reactLeaflet.Map,
 				{ bounds: bounds, style: styles.map },
 				_react2['default'].createElement(_reactLeaflet.TileLayer, {
 					url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-					attribution: '© Google 2017 | © <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+					attribution: '© <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
 				}),
 				_react2['default'].createElement(_reactLeaflet.Polyline, {
 					positions: flattenPositions,
