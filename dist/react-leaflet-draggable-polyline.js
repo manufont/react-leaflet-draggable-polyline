@@ -876,6 +876,10 @@ var _propTypes2 = _interopRequireDefault(_propTypes);
 
 var _reactLeaflet = require('react-leaflet');
 
+var _leaflet = require('leaflet');
+
+var _leaflet2 = _interopRequireDefault(_leaflet);
+
 var _icons = require('./icons');
 
 var _utils = require('./utils');
@@ -889,6 +893,8 @@ var DraggablePolyline = (function (_Component) {
 		_get(Object.getPrototypeOf(DraggablePolyline.prototype), 'constructor', this).call(this, props, context);
 
 		this.map = context.map;
+		this.validProps(props);
+		this.setPositions(props.positions);
 
 		this.onMapMouseMove = this.onMapMouseMove.bind(this);
 		this.removeNewWaypointMarker = this.removeNewWaypointMarker.bind(this);
@@ -913,12 +919,68 @@ var DraggablePolyline = (function (_Component) {
 			this.map.off('mousemove', this.onMapMouseMove);
 		}
 	}, {
+		key: 'componentWillReceiveProps',
+		value: function componentWillReceiveProps(props) {
+			this.validProps(props);
+			this.setPositions(props.positions);
+		}
+	}, {
+		key: 'validProps',
+		value: function validProps(props) {
+			if (props.positions.length === 0) {
+				throw new Error('Positions array should not be empty');
+			}
+			if (props.positions[0][0].constructor === Array) {
+				props.positions.forEach(function (leg) {
+					if (leg.length < 2) {
+						throw new Error('Positions array should contains at least 2 positions');
+					}
+				});
+				if (props.positions.length !== props.waypoints.length + 1) {
+					throw new Error('Positions legs length should be equal to waypoints length + 1');
+				}
+			} else {
+				if (props.positions.length < 2) {
+					throw new Error('Positions array should contains at least 2 positions');
+				}
+			}
+		}
+	}, {
+		key: 'snapToPolyline',
+		value: function snapToPolyline(position) {
+			return (0, _utils.snapToPolyline)(position, this.positions);
+		}
+	}, {
+		key: 'closestIndexOfPolyline',
+		value: function closestIndexOfPolyline(position) {
+			return (0, _utils.closestIndexOfPolyline)(position, this.positions);
+		}
+	}, {
+		key: 'setPositions',
+		value: function setPositions(positions) {
+			var _this = this;
+
+			this.positionIndexes = [];
+			if (positions[0][0].constructor === Array) {
+				(function () {
+					var indexes = 0;
+					positions.forEach(function (leg) {
+						indexes += leg.length;
+						_this.positionIndexes.push(indexes);
+					});
+					_this.positions = (0, _utils.flatten)(positions);
+				})();
+			} else {
+				this.positions = positions;
+			}
+		}
+	}, {
 		key: 'onMapMouseMove',
 		value: function onMapMouseMove(event) {
 			var map = this.map;
-			if (this.props.positions && !this.previewHidden) {
+			if (!this.previewHidden) {
 				if (!this.onPreviewDrag) {
-					var _location = (0, _utils.snapToPolyline)((0, _utils.toArrayLatLng)(event.latlng), this.props.positions);
+					var _location = this.snapToPolyline((0, _utils.toArrayLatLng)(event.latlng));
 					var point = map.latLngToContainerPoint((0, _utils.toObjLatLng)(_location));
 					if (point.distanceTo(event.containerPoint) > 10) {
 						this.removePreviewMarker();
@@ -937,14 +999,14 @@ var DraggablePolyline = (function (_Component) {
 	}, {
 		key: 'addPreviewMarker',
 		value: function addPreviewMarker(location) {
-			var _this = this;
+			var _this2 = this;
 
 			clearTimeout(this.previewTimeout);
 			this.previewTimeout = setTimeout(function () {
-				_this.previewMarker = L.marker(location, {
-					icon: _this.props.mouseOverWaypointIcon || _icons.mouseOverWaypointIcon,
+				_this2.previewMarker = _leaflet2['default'].marker(location, {
+					icon: _this2.props.mouseOverWaypointIcon || _icons.mouseOverWaypointIcon,
 					draggable: true
-				}).on('dragstart', _this.onPreviewMarkerDragStart).on('dragend', _this.onPreviewMarkerDragEnd).addTo(_this.map);
+				}).on('dragstart', _this2.onPreviewMarkerDragStart).on('dragend', _this2.onPreviewMarkerDragEnd).addTo(_this2.map);
 			}, 5);
 		}
 	}, {
@@ -956,21 +1018,6 @@ var DraggablePolyline = (function (_Component) {
 			}
 		}
 	}, {
-		key: 'addNewWaypointMarker',
-		value: function addNewWaypointMarker(location) {
-			var _this2 = this;
-
-			this.removeNewWaypointMarker();
-			clearTimeout(this.newWaypointTimeout);
-			this.newWaypointTimeout = setTimeout(function () {
-				_this2.newWaypointMarker = L.marker(location, {
-					icon: _this2.props.draggableWaypointIcon || _icons.draggableWaypointIcon,
-					draggable: true,
-					zIndexOffset: 50
-				}).on('click', _this2.removeNewWaypointMarker).on('dragend', _this2.onNewWaypointMarkerDragEnd).on('mouseover', _this2.hidePreview).on('mouseout', _this2.showPreview).addTo(_this2.map);
-			}, 5);
-		}
-	}, {
 		key: 'removeNewWaypointMarker',
 		value: function removeNewWaypointMarker() {
 			if (this.newWaypointMarker) {
@@ -979,8 +1026,33 @@ var DraggablePolyline = (function (_Component) {
 			}
 		}
 	}, {
+		key: 'getIndex',
+		value: function getIndex(positionIndex) {
+			var index = this.positionIndexes.findIndex(function (index) {
+				return positionIndex < index;
+			});
+			if (index === -1) return null;
+			return index;
+		}
+	}, {
+		key: 'onWaypointAdded',
+		value: function onWaypointAdded(newWaypoint, index) {
+			if (this.props.onWaypointsChange) {
+				var waypoints = index === undefined ? [].concat(_toConsumableArray(this.props.waypoints), [newWaypoint]) : [].concat(_toConsumableArray(this.props.waypoints.slice(0, index)), [newWaypoint], _toConsumableArray(this.props.waypoints.slice(index)));
+				this.props.onWaypointsChange(waypoints, index);
+			}
+			if (this.props.onWaypointAdd) {
+				this.props.onWaypointAdd(newWaypoint, index);
+			}
+		}
+	}, {
 		key: 'onPreviewMarkerDragStart',
 		value: function onPreviewMarkerDragStart(event) {
+			var closestIndex = this.closestIndexOfPolyline((0, _utils.toArrayLatLng)(event.target.getLatLng()));
+			_leaflet2['default'].Util.setOptions(this.previewMarker, {
+				index: this.getIndex(closestIndex)
+			});
+			this.previewMarker.setZIndexOffset(100);
 			this.onPreviewDrag = true;
 		}
 	}, {
@@ -988,27 +1060,17 @@ var DraggablePolyline = (function (_Component) {
 		value: function onPreviewMarkerDragEnd(event) {
 			this.onPreviewDrag = false;
 			var newWaypoint = (0, _utils.toArrayLatLng)(event.target.getLatLng());
+			var index = event.target.options.index;
 			this.removePreviewMarker();
-			if (this.props.onWaypointsChange) {
-				var waypoints = [].concat(_toConsumableArray(this.props.waypoints), [newWaypoint]);
-				this.props.onWaypointsChange(waypoints, waypoints.length - 1);
-			}
-			if (this.props.onWaypointAdd) {
-				this.props.onWaypointAdd(newWaypoint);
-			}
+			this.onWaypointAdded(newWaypoint, index);
 		}
 	}, {
 		key: 'onNewWaypointMarkerDragEnd',
 		value: function onNewWaypointMarkerDragEnd(event) {
 			var newWaypoint = (0, _utils.toArrayLatLng)(event.target.getLatLng());
 			this.removeNewWaypointMarker();
-			if (this.props.onWaypointsChange) {
-				var waypoints = [].concat(_toConsumableArray(this.props.waypoints), [newWaypoint]);
-				this.props.onWaypointsChange(waypoints, waypoints.length - 1);
-			}
-			if (this.props.onWaypointAdd) {
-				this.props.onWaypointAdd(newWaypoint);
-			}
+			var index = event.target.options.options.index;
+			this.onWaypointAdded(newWaypoint, index);
 		}
 	}, {
 		key: 'onWaypointClick',
@@ -1046,7 +1108,22 @@ var DraggablePolyline = (function (_Component) {
 	}, {
 		key: 'onPolylineClick',
 		value: function onPolylineClick(event) {
-			this.addNewWaypointMarker((0, _utils.snapToPolyline)((0, _utils.toArrayLatLng)(event.latlng), this.props.positions));
+			var _this3 = this;
+
+			var closestIndex = this.closestIndexOfPolyline((0, _utils.toArrayLatLng)(event.latlng));
+			var location = this.snapToPolyline((0, _utils.toArrayLatLng)(event.latlng));
+			this.removeNewWaypointMarker();
+			clearTimeout(this.newWaypointTimeout);
+			this.newWaypointTimeout = setTimeout(function () {
+				_this3.newWaypointMarker = _leaflet2['default'].marker(location, {
+					icon: _this3.props.draggableWaypointIcon || _icons.draggableWaypointIcon,
+					draggable: true,
+					zIndexOffset: 50,
+					options: {
+						index: _this3.getIndex[closestIndex]
+					}
+				}).on('click', _this3.removeNewWaypointMarker).on('dragend', _this3.onNewWaypointMarkerDragEnd).on('mouseover', _this3.hidePreview).on('mouseout', _this3.showPreview).addTo(_this3.map);
+			}, 5);
 			if (this.props.onclick) {
 				this.props.onclick();
 			}
@@ -1055,6 +1132,7 @@ var DraggablePolyline = (function (_Component) {
 		key: 'hidePreview',
 		value: function hidePreview() {
 			this.previewHidden = true;
+			this.onPreviewDrag = false;
 		}
 	}, {
 		key: 'showPreview',
@@ -1064,7 +1142,7 @@ var DraggablePolyline = (function (_Component) {
 	}, {
 		key: 'render',
 		value: function render() {
-			var _this3 = this;
+			var _this4 = this;
 
 			var waypoints = this.props.waypoints;
 			var polylineProps = (0, _utils.objectWithoutProperties)(this.props, customProps);
@@ -1072,19 +1150,21 @@ var DraggablePolyline = (function (_Component) {
 			return _react2['default'].createElement(
 				'g',
 				null,
-				_react2['default'].createElement(_reactLeaflet.Polyline, _extends({}, polylineProps, {
+				_react2['default'].createElement(_reactLeaflet.Polyline, _extends({
+					positions: this.positions
+				}, polylineProps, {
 					onclick: this.onPolylineClick
 				})),
 				waypoints.map(function (waypoint, index) {
 					return _react2['default'].createElement(_reactLeaflet.Marker, {
 						key: index,
 						position: waypoint,
-						icon: _this3.props.draggableWaypointIcon || _icons.draggableWaypointIcon,
+						icon: _this4.props.draggableWaypointIcon || _icons.draggableWaypointIcon,
 						draggable: true,
-						ondragend: _this3.onWaypointDragEnd,
-						onclick: _this3.onWaypointClick,
-						onmouseover: _this3.hidePreview,
-						onmouseout: _this3.showPreview,
+						ondragend: _this4.onWaypointDragEnd,
+						onclick: _this4.onWaypointClick,
+						onmouseover: _this4.hidePreview,
+						onmouseout: _this4.showPreview,
 						zIndexOffset: 50,
 						options: { index: index }
 					});
@@ -1098,7 +1178,7 @@ var DraggablePolyline = (function (_Component) {
 
 ;
 
-var customProps = ['waypoints', 'onWaypointsChange', 'onWaypointRemove', 'onWaypointAdd', 'onWaypointMove', 'mouseOverWaypointIcon', 'draggableWaypointIcon'];
+var customProps = ['positions', 'waypoints', 'onWaypointsChange', 'onWaypointRemove', 'onWaypointAdd', 'onWaypointMove', 'mouseOverWaypointIcon', 'draggableWaypointIcon'];
 
 DraggablePolyline.contextTypes = {
 	map: _propTypes2['default'].object.isRequired
@@ -1112,7 +1192,7 @@ DraggablePolyline.propTypes = {
 	onWaypointRemove: _propTypes2['default'].func,
 	onWaypointsChange: _propTypes2['default'].func,
 	onclick: _propTypes2['default'].func,
-	positions: _propTypes2['default'].arrayOf(_propTypes2['default'].arrayOf(_propTypes2['default'].number)).isRequired,
+	positions: _propTypes2['default'].oneOfType([_propTypes2['default'].arrayOf(_propTypes2['default'].arrayOf(_propTypes2['default'].number)), _propTypes2['default'].arrayOf(_propTypes2['default'].arrayOf(_propTypes2['default'].arrayOf(_propTypes2['default'].number)))]).isRequired,
 	waypoints: _propTypes2['default'].arrayOf(_propTypes2['default'].arrayOf(_propTypes2['default'].number))
 };
 
@@ -1125,7 +1205,7 @@ exports['default'] = DraggablePolyline;
 module.exports = exports['default'];
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./icons":10,"./utils":11,"prop-types":7,"react-leaflet":undefined}],10:[function(require,module,exports){
+},{"./icons":10,"./utils":11,"leaflet":undefined,"prop-types":7,"react-leaflet":undefined}],10:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -1153,14 +1233,11 @@ exports.draggableWaypointIcon = draggableWaypointIcon;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
-
-var minBy = function minBy(lambda, array) {
-  var mapped = array.map(lambda);
-  return array[mapped.indexOf(Math.min.apply(Math, _toConsumableArray(mapped)))];
+var flatten = function flatten(array) {
+  return Array.prototype.concat.apply([], array);
 };
 
+exports.flatten = flatten;
 var sqr = function sqr(x) {
   return x * x;
 };
@@ -1180,28 +1257,34 @@ var closestOfSegment = function closestOfSegment(p, v, w) {
 
 var snapToPolyline = function snapToPolyline(latlng, positions) {
   var minDistance = Number.MAX_VALUE;
-  var indexOfClosest = 0;
-  for (var i = 0; i < positions.length; ++i) {
-    var d = distance(latlng, positions[i]);
+  var closest = null;
+  for (var i = 0, len = positions.length - 1; i < len; ++i) {
+    var p = closestOfSegment(latlng, positions[i], positions[i + 1]);
+    var d = distance(latlng, p);
     if (d < minDistance) {
+      closest = p;
       minDistance = d;
-      indexOfClosest = i;
     }
   }
-  var closest = positions[indexOfClosest];
-
-  return minBy(function (point) {
-    return distance(latlng, point);
-  }, [indexOfClosest - 1, indexOfClosest + 1].map(function (index) {
-    return positions[index];
-  }).filter(function (point) {
-    return point !== undefined;
-  }).map(function (point) {
-    return closestOfSegment(latlng, closest, point);
-  }));
+  return closest;
 };
 
 exports.snapToPolyline = snapToPolyline;
+var closestIndexOfPolyline = function closestIndexOfPolyline(latlng, positions) {
+  var minDistance = Number.MAX_VALUE;
+  var closestIndex = null;
+  for (var i = 0, len = positions.length - 1; i < len; ++i) {
+    var p = closestOfSegment(latlng, positions[i], positions[i + 1]);
+    var d = distance(latlng, p);
+    if (d < minDistance) {
+      closestIndex = i;
+      minDistance = d;
+    }
+  }
+  return closestIndex;
+};
+
+exports.closestIndexOfPolyline = closestIndexOfPolyline;
 var toArrayLatLng = function toArrayLatLng(latLng) {
   return [latLng.lat, latLng.lng];
 };
