@@ -47,18 +47,22 @@ class DraggablePolyline extends Component {
 	}
 
 	validProps(props){
-		if(props.positions.length === 0)
+		if(props.positions.length === 0){
 			throw new Error('Positions array should not be empty');
+		}
 		if(props.positions[0][0].constructor === Array){
 			props.positions.forEach(leg => {
-				if(leg.length < 2)
+				if(leg.length < 2){
 					throw new Error('Positions array should contains at least 2 positions');
+				}
 			});
-			if(props.positions.length !== props.waypoints.length+1)
+			if(props.positions.length !== props.waypoints.length+1){
 				throw new Error('Positions legs length should be equal to waypoints length + 1');
+			}
 		}else{
-			if(props.positions.length < 2)
+			if(props.positions.length < 2){
 				throw new Error('Positions array should contains at least 2 positions');
+			}
 		}
 	}
 
@@ -148,7 +152,7 @@ class DraggablePolyline extends Component {
 				...this.props.waypoints.slice(0, index),
 				newWaypoint,
 				...this.props.waypoints.slice(index)
-			]
+			];
 			this.props.onWaypointsChange(waypoints, index);
 		}
 		if(this.props.onWaypointAdd){
