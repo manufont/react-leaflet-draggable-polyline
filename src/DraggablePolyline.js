@@ -179,8 +179,8 @@ class DraggablePolyline extends Component {
 
 	onNewWaypointMarkerDragEnd(event){
 		const newWaypoint = toArrayLatLng(event.target.getLatLng());
+		const index = event.target.options.index;
 		this.removeNewWaypointMarker();
-		const index = event.target.options.options.index;
 		this.onWaypointAdded(newWaypoint, index);
 	}
 
@@ -223,9 +223,7 @@ class DraggablePolyline extends Component {
 				icon: this.props.draggableWaypointIcon || draggableWaypointIcon,
 				draggable: true,
 				zIndexOffset: 50,
-				options: {
-					index: this.getIndex[closestIndex]
-				}
+				index: this.getIndex(closestIndex)
 			})
 			.on('click', this.removeNewWaypointMarker)
 			.on('dragend', this.onNewWaypointMarkerDragEnd)

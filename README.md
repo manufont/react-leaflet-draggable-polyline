@@ -8,9 +8,9 @@ A draggable polyline to use with [react-leaflet](https://github.com/PaulLeCam/re
 
 ## Demo & Examples
 
-[Basic example](http://manufont.github.io/react-leaflet-draggable-polyline/)
-
 [Example with ordered new waypoints](http://manufont.github.io/react-leaflet-draggable-polyline/reordered.html)
+
+[Basic example with no ordering](http://manufont.github.io/react-leaflet-draggable-polyline/)
 
 [Example using google maps directions](http://manufont.github.io/react-leaflet-draggable-polyline/directions.html)
 

@@ -56,11 +56,12 @@ class App extends Component {
 		this.getDirections([]);
 	}
 
-	onWaypointsChange(waypoints){
-		this.getDirections(waypoints);
+	onWaypointsChange(waypoints, index){
+		const zoom = this.map.leafletElement.getZoom();
+		this.getDirections(waypoints, index, zoom);
 	}
 
-	getDirections(waypoints){
+	getDirections(waypoints, snapIndex, zoom){
 		const positions = this.state.positions;
 		const request = {
 			travelMode: window.google.maps.TravelMode.DRIVING,
@@ -69,8 +70,17 @@ class App extends Component {
 			waypoints: waypoints.map(waypoint => ({
 				location: toObjLatLng(waypoint),
 				stopover: true
-			}))
+			})),
+			...(snapIndex !== undefined) && {
+				df: 3,
+				Jb: snapIndex+1,
+				me: zoom
+				//This is an undocumented feature of DirectionsService.
+				//It snaps the new waypoint to the nearest biggest road.
+				//those keys are linked to gmaps api v3.28.19. You can reverse-engineer any version by using a DirectionsRenderer
+			}
 		};
+		console.log(request);
 		const directionsService = new gmaps.DirectionsService();
 		directionsService.route(request, (response, status) => {
 			if (status === gmaps.DirectionsStatus.OK) {
@@ -95,7 +105,7 @@ class App extends Component {
 		};
 
 		return (
-			<Map bounds={bounds} style={styles.map}>
+			<Map bounds={bounds} style={styles.map} ref={m => this.map = m}>
 				<TileLayer
 					url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
 					attribution='&copy; Google 2017 | &copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
