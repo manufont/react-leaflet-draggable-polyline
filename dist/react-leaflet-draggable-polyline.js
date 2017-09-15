@@ -1068,8 +1068,8 @@ var DraggablePolyline = (function (_Component) {
 		key: 'onNewWaypointMarkerDragEnd',
 		value: function onNewWaypointMarkerDragEnd(event) {
 			var newWaypoint = (0, _utils.toArrayLatLng)(event.target.getLatLng());
+			var index = event.target.options.index;
 			this.removeNewWaypointMarker();
-			var index = event.target.options.options.index;
 			this.onWaypointAdded(newWaypoint, index);
 		}
 	}, {
@@ -1119,9 +1119,7 @@ var DraggablePolyline = (function (_Component) {
 					icon: _this3.props.draggableWaypointIcon || _icons.draggableWaypointIcon,
 					draggable: true,
 					zIndexOffset: 50,
-					options: {
-						index: _this3.getIndex[closestIndex]
-					}
+					index: _this3.getIndex(closestIndex)
 				}).on('click', _this3.removeNewWaypointMarker).on('dragend', _this3.onNewWaypointMarkerDragEnd).on('mouseover', _this3.hidePreview).on('mouseout', _this3.showPreview).addTo(_this3.map);
 			}, 5);
 			if (this.props.onclick) {
