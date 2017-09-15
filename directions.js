@@ -1,6 +1,8 @@
 require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 'use strict';
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
@@ -84,16 +86,17 @@ var App = (function (_Component) {
 		}
 	}, {
 		key: 'onWaypointsChange',
-		value: function onWaypointsChange(waypoints) {
-			this.getDirections(waypoints);
+		value: function onWaypointsChange(waypoints, index) {
+			var zoom = this.map.leafletElement.getZoom();
+			this.getDirections(waypoints, index, zoom);
 		}
 	}, {
 		key: 'getDirections',
-		value: function getDirections(waypoints) {
+		value: function getDirections(waypoints, snapIndex, zoom) {
 			var _this = this;
 
 			var positions = this.state.positions;
-			var request = {
+			var request = _extends({
 				travelMode: window.google.maps.TravelMode.DRIVING,
 				origin: toObjLatLng(positions[0][0]),
 				destination: toObjLatLng(last(last(positions))),
@@ -103,7 +106,15 @@ var App = (function (_Component) {
 						stopover: true
 					};
 				})
-			};
+			}, snapIndex !== undefined && {
+				df: 3,
+				Jb: snapIndex + 1,
+				me: zoom
+				//This is an undocumented feature of DirectionsService.
+				//It snaps the new waypoint to the nearest biggest road.
+				//those keys are linked to gmaps api v3.28.19. You can reverse-engineer any version by using a DirectionsRenderer
+			});
+			console.log(request);
 			var directionsService = new gmaps.DirectionsService();
 			directionsService.route(request, function (response, status) {
 				if (status === gmaps.DirectionsStatus.OK) {
@@ -117,6 +128,8 @@ var App = (function (_Component) {
 	}, {
 		key: 'render',
 		value: function render() {
+			var _this2 = this;
+
 			var _state = this.state;
 			var waypoints = _state.waypoints;
 			var positions = _state.positions;
@@ -132,7 +145,9 @@ var App = (function (_Component) {
 
 			return _react2['default'].createElement(
 				_reactLeaflet.Map,
-				{ bounds: bounds, style: styles.map },
+				{ bounds: bounds, style: styles.map, ref: function (m) {
+						return _this2.map = m;
+					} },
 				_react2['default'].createElement(_reactLeaflet.TileLayer, {
 					url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
 					attribution: '© Google 2017 | © <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
