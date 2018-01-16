@@ -107,9 +107,9 @@ var App = (function (_Component) {
 					};
 				})
 			}, snapIndex !== undefined && {
-				df: 3,
-				Jb: snapIndex + 1,
-				me: zoom
+				lf: 3,
+				Rb: snapIndex + 1,
+				ue: zoom
 				//This is an undocumented feature of DirectionsService.
 				//It snaps the new waypoint to the nearest biggest road.
 				//those keys are linked to gmaps api v3.28.19. You can reverse-engineer any version by using a DirectionsRenderer
