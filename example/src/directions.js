@@ -72,12 +72,12 @@ class App extends Component {
 				stopover: true
 			})),
 			...(snapIndex !== undefined) && {
-				Af: 3,
-				Zb: snapIndex+1,
-				Se: zoom
+				Df: 3,
+				tc: snapIndex+1,
+				Xe: zoom
 				//This is an undocumented feature of DirectionsService.
 				//It snaps the new waypoint to the nearest biggest road.
-				//those keys are linked to gmaps api v3.28.19. You can reverse-engineer any version by using a DirectionsRenderer
+				//those keys are linked to gmaps api v3.28.19. You can reverse-engineer any version by using a DirectionsRenderer here https://jsfiddle.net/r98npvx0/3/
 			}
 		};
 		console.log(request);
